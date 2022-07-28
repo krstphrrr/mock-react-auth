@@ -47,34 +47,21 @@ function App() {
     // const domain = "dev-mg6fdv6o.auth0.com";
     try{
       const accessToken = await getAccessTokenSilently();
-      // block for testing getting permissions
-      // const userDetailsByIdUrl = `https://${domain}/api/v2/users/${user.sub}`
-      // const metadataResponse = await fetch(userDetailsByIdUrl, {
-      //           headers: {
-      //             authorization: `Bearer ${accessToken}`,
-      //           }
-      //         })
-      // const  {user_metadata}  = await metadataResponse.json();
-      ////////////////////////////////////////
-      // const response = await axios.put('http://localhost:5001/api/download-data',{
-      //   data: {
-      //     "primaryKeys": ["17101012114127892017-09-01"]
-      //   }
-      // }, {
-      //   headers:{
-      //     authorization: `Bearer ${accessToken}`
-      //   }
-      // })
-      // console.log(response.data)
+   
       let decoded = await jwtok.decode(accessToken)
       console.log({"token": await accessToken}) // decode on jwt.io to check validity of token
       user['permissions'] = decoded.permissions // added to user object 
       console.log(decoded.permissions)
-      
+
       let response
       let permissions = decoded.permissions
-
-      if(permissions.includes('read:NDOW')){
+//  IF USER ONLY HAS NDOW
+      if(
+          permissions.includes('read:NDOW') && 
+          !permissions.includes('read:NWERN') &&
+          !permissions.includes('read:RHEM')
+        ){
+          console.log('NDOW')
           response = await fetch('http://localhost:5001/api/ndow',{
               method: "put",
               headers: {
@@ -88,20 +75,125 @@ function App() {
               }), 
               
             })
-          } else if(permissions.includes('read:NDOW') && permissions.include('read:NWERN')){
-          response = await fetch('http://localhost:5001/api/ndow-nwern',{
-            method: "put"
-          }, {
+// IF USER HAS PERMISSIONS: NWERN
+          } else if(
+              !permissions.includes('read:NDOW') && 
+              permissions.includes('read:NWERN') &&
+              !permissions.includes('read:RHEM')
+          ){
+            console.log('NWERN')
+            response = await fetch('http://localhost:5001/api/nwern',{
+              method: "put",
+              headers: {
+                'authorization': `Bearer ${accessToken}`,
+                'Content-Type': 'application/json'
+              },
+              body:JSON.stringify({
+                data: {
+                  "primaryKeys": ["17101012114127892017-09-01"]
+                }
+              }), 
+              
+            })
+// IF USER HAS PERMISSIONS: RHEM
+          } else if(
+            !permissions.includes('read:NDOW') && 
+            !permissions.includes('read:NWERN') &&
+            permissions.includes('read:RHEM')
+        ){
+          console.log('RHEM')
+          response = await fetch('http://localhost:5001/api/rhem',{
+            method: "put",
+            headers: {
+              'authorization': `Bearer ${accessToken}`,
+              'Content-Type': 'application/json'
+            },
+            body:JSON.stringify({
               data: {
                 "primaryKeys": ["17101012114127892017-09-01"]
               }
-            }, {
-              headers:{
-                authorization: `Bearer ${accessToken}`
-              }
-            })
-          // will add more combinations here
-          } else {
+            }), 
+            
+          })
+// START OF DUAL COMBINATIONS
+// IF USER HAS PERMISSIONS: NDOW + NWERN
+        } else if(
+          permissions.includes('read:NDOW') && 
+          permissions.includes('read:NWERN') &&
+          !permissions.includes('read:RHEM')
+      ){
+        console.log('NDOW NWERN')
+        response = await fetch('http://localhost:5001/api/ndow-nwern',{
+          method: "put",
+          headers: {
+            'authorization': `Bearer ${accessToken}`,
+            'Content-Type': 'application/json'
+          },
+          body:JSON.stringify({
+            data: {
+              "primaryKeys": ["17101012114127892017-09-01"]
+            }
+          }), 
+        })
+// IF USER HAS PERMISSIONS: NDOW + RHEM
+        } else if(
+          permissions.includes('read:NDOW') && 
+          !permissions.includes('read:NWERN') &&
+          permissions.includes('read:RHEM')
+        ){
+        console.log('NDOW RHEM')
+        response = await fetch('http://localhost:5001/api/ndow-rhem',{
+          method: "put",
+          headers: {
+            'authorization': `Bearer ${accessToken}`,
+            'Content-Type': 'application/json'
+          },
+          body:JSON.stringify({
+            data: {
+              "primaryKeys": ["17101012114127892017-09-01"]
+            }
+          }), 
+        })
+// IF USER HAS PERMISSIONS: NWERN + RHEM
+        } else if(
+          !permissions.includes('read:NDOW') && 
+          permissions.includes('read:NWERN') &&
+          permissions.includes('read:RHEM')
+        ){
+        console.log('RHEM NWERN')
+        response = await fetch('http://localhost:5001/api/nwern-rhem',{
+          method: "put",
+          headers: {
+            'authorization': `Bearer ${accessToken}`,
+            'Content-Type': 'application/json'
+          },
+          body:JSON.stringify({
+            data: {
+              "primaryKeys": ["17101012114127892017-09-01"]
+            }
+          }), 
+        })
+// START OF ALL 3 PERMISSIONS
+// IF USER HAS PERMISSIONS: NDOW + RHEM + NWERN
+        } else if(
+          permissions.includes('read:NDOW') && 
+          permissions.includes('read:NWERN') &&
+          permissions.includes('read:RHEM')
+        ){
+        console.log('NDOW NWERN RHEM')
+        response = await fetch('http://localhost:5001/api/ndow-nwern-rhem',{
+          method: "put",
+          headers: {
+            'authorization': `Bearer ${accessToken}`,
+            'Content-Type': 'application/json'
+          },
+          body:JSON.stringify({
+            data: {
+              "primaryKeys": ["17101012114127892017-09-01"]
+            }
+          }), 
+        })
+        } else {
           response = await fetch('http://localhost:5001/api/unrestricted',{
             method: "put"
           }, {
